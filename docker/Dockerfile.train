@@ -1,0 +1,25 @@
+# Multi-stage optimized Dockerfile for training
+FROM python:3.11-slim AS builder
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY requirements/train.txt ./requirements/train.txt
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends build-essential git ca-certificates \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& python -m pip install --upgrade pip wheel setuptools \
+	&& pip wheel --no-cache-dir -r requirements/train.txt -w /wheels
+
+FROM python:3.11-slim AS runtime
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY --from=builder /wheels /wheels
+COPY requirements/train.txt ./requirements/train.txt
+RUN python -m pip install --no-cache-dir --no-index --find-links /wheels -r requirements/train.txt \
+	&& rm -rf /wheels
+
+# Copy source (do not include dataset artifacts)
+COPY src/ ./src/
+COPY configs/ ./configs/
+
+ENTRYPOINT ["python", "src/train.py"]
+CMD []

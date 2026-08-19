@@ -1,0 +1,16 @@
+model:
+  architecture: simple_cnn
+  num_classes: 10
+data:
+  data_dir: ./data
+training:
+  epochs: 10
+  batch_size: 64
+  learning_rate: 0.001
+  num_workers: 2
+  device: auto
+  early_stopping_patience: 3
+output:
+  checkpoint_dir: artifacts
+  model_name: model.pt
+  metrics_path: artifacts/metrics.jsonl
