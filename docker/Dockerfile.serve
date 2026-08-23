@@ -1,0 +1,8 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements/serve.txt ./requirements/serve.txt
+RUN pip install --no-cache-dir -r requirements/serve.txt
+COPY src/serve.py ./src/serve.py
+COPY checkpoints/model.onnx ./checkpoints/model.onnx
+EXPOSE 8080
+CMD ["python", "src/serve.py"]
