@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: serving-deployment
+  namespace: mlops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlops-serve
+  template:
+    metadata:
+      labels:
+        app: mlops-serve
+    spec:
+      containers:
+      - name: serve
+        image: mlops-serve:latest
+        ports:
+        - containerPort: 8080
