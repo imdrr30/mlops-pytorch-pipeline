@@ -17,5 +17,18 @@ Quick start
 Build the training image:
 
 ```bash
-docker build -f docker/Dockerfile.train -t mlops-train:latest .
+docker build . -f .\docker\Dockerfile.train -t assignment4train:1.0 
+```
+
+
+To run the Training Image:
+```bash
+docker run --gpus all --name assignment4train-container -v $(pwd)/data:/app/data -v $(pwd)/checkpoints:/app/checkpoints assignment4train:1.0
+```
+
+The training image writes `artifacts/model.onnx`. Build and run the lightweight serving image after training:
+
+```bash
+docker build . -f .\docker\Dockerfile.serve -t assignment4serve:onnx
+docker run --rm -p 8080:8080 assignment4serve:onnx
 ```

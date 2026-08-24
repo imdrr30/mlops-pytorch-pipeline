@@ -49,6 +49,21 @@ def evaluate(model, loader, criterion, device):
     return total_loss / total, correct / total
 
 
+def export_onnx(model, output_path: Path, device):
+    model.eval()
+    example_input = torch.randn(1, 3, 32, 32, device=device)
+    torch.onnx.export(
+        model,
+        example_input,
+        output_path,
+        input_names=["input"],
+        output_names=["logits"],
+        dynamic_axes={"input": {0: "batch"}, "logits": {0: "batch"}},
+        opset_version=17,
+        dynamo=False,
+    )
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default=None)
@@ -79,7 +94,7 @@ def main():
     criterion = nn.CrossEntropyLoss()
     checkpoint_dir = Path(output_config["checkpoint_dir"])
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
-    checkpoint_path = checkpoint_dir / output_config["model_name"]
+    model_path = checkpoint_dir / output_config["model_name"]
     metrics_path = Path(output_config.get("metrics_path", checkpoint_dir / "metrics.jsonl"))
     metrics_path.parent.mkdir(parents=True, exist_ok=True)
     best_val_loss = float("inf")
@@ -102,15 +117,8 @@ def main():
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 patience_counter = 0
-                torch.save({
-                    "epoch": epoch + 1,
-                    "model_state_dict": model.state_dict(),
-                    "optimizer_state_dict": optimizer.state_dict(),
-                    "val_loss": val_loss,
-                    "val_accuracy": val_acc,
-                    "model_config": model_config,
-                }, checkpoint_path)
-                print(json.dumps({"event": "checkpoint_saved", "path": str(checkpoint_path)}), flush=True)
+                export_onnx(model, model_path, device)
+                print(json.dumps({"event": "model_saved", "path": str(model_path)}), flush=True)
             else:
                 patience_counter += 1
                 if patience_counter >= training_config["early_stopping_patience"]:
