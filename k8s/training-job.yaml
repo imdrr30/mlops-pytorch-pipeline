@@ -2,12 +2,44 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: training-job
-  namespace: mlops
+  namespace: ml-training
 spec:
   template:
     spec:
+      nodeSelector:
+        accelerator: nvidia
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
       containers:
       - name: trainer
         image: mlops-train:latest
         command: ["python", "src/train.py"]
+        resources:
+          requests:
+            cpu: "2"
+            memory: 4Gi
+            nvidia.com/gpu: "1"
+          limits:
+            cpu: "2"
+            memory: 4Gi
+            nvidia.com/gpu: "1"
+        volumeMounts:
+        - name: training-config
+          mountPath: /app/configs
+        - name: training-data
+          mountPath: /app/data
+        - name: training-checkpoints
+          mountPath: /app/checkpoints
+      volumes:
+      - name: training-config
+        configMap:
+          name: training-config
+      - name: training-data
+        persistentVolumeClaim:
+          claimName: training-data-pvc
+      - name: training-checkpoints
+        persistentVolumeClaim:
+          claimName: training-checkpoints-pvc
       restartPolicy: Never
