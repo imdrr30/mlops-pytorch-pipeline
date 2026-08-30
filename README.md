@@ -2,6 +2,8 @@
 
 Minimal MLOps scaffold for a PyTorch training and serving pipeline.
 
+![MLOps architecture](architecture.png)
+
 Structure:
 
 - `src/` - training, model, dataset and serving entrypoints
