@@ -1,13 +1,13 @@
 model:
-  architecture: simple_cnn
+  architecture: resnet18
   num_classes: 10
 data:
   data_dir: ./data
 training:
-  epochs: 50
-  batch_size: 64
+  epochs: 10
+  batch_size: 256
   learning_rate: 0.001
-  num_workers: 2
+  num_workers: 0
   device: auto
   early_stopping_patience: 10
 output:
