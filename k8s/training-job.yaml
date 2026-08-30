@@ -2,12 +2,37 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: training-job
-  namespace: mlops
+  namespace: ml-training
 spec:
   template:
     spec:
       containers:
       - name: trainer
-        image: mlops-train:latest
+        image: mlops-train:1.0
+        imagePullPolicy: Never
         command: ["python", "src/train.py"]
+        resources:
+          requests:
+            cpu: "500m"
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        volumeMounts:
+        - name: training-config
+          mountPath: /app/configs
+        - name: training-data
+          mountPath: /app/data
+        - name: training-checkpoints
+          mountPath: /app/checkpoints
+      volumes:
+      - name: training-config
+        configMap:
+          name: training-config
+      - name: training-data
+        persistentVolumeClaim:
+          claimName: training-data-pvc
+      - name: training-checkpoints
+        persistentVolumeClaim:
+          claimName: training-checkpoints-pvc
       restartPolicy: Never

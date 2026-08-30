@@ -2,9 +2,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: serving-deployment
-  namespace: mlops
+  namespace: ml-training
 spec:
-  replicas: 1
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: mlops-serve
@@ -12,9 +17,38 @@ spec:
     metadata:
       labels:
         app: mlops-serve
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
     spec:
       containers:
       - name: serve
-        image: mlops-serve:latest
+        image: mlops-serve:onnx
         ports:
         - containerPort: 8080
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 5
+          initialDelaySeconds: 15
+        volumeMounts:
+        - name: checkpoints
+          mountPath: /app/checkpoints
+          readOnly: true
+      volumes:
+      - name: checkpoints
+        persistentVolumeClaim:
+          claimName: training-checkpoints-pvc

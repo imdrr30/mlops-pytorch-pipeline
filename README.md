@@ -17,18 +17,32 @@ Quick start
 Build the training image:
 
 ```bash
-docker build . -f .\docker\Dockerfile.train -t assignment4train:1.0 
+docker build . -f .\docker\Dockerfile.train -t mlops-train:1.0 
 ```
 
 
 To run the Training Image:
 ```bash
-docker run --gpus all --name assignment4train-container -v "$(pwd)/data:/app/data" -v "$(pwd)/checkpoints:/app/checkpoints" assignment4train:1.0
+docker run --gpus all --name mlops-train-container -v "$(pwd)/data:/app/data" -v "$(pwd)/checkpoints:/app/checkpoints" mlops-train:1.0
 ```
 
 The training image writes `checkpoints/model.onnx`. Build and run the lightweight serving image after training:
 
 ```bash
-docker build . -f .\docker\Dockerfile.serve -t assignment4serve:onnx
-docker run --rm --gpus all -v "$(pwd)/checkpoints:/app/checkpoints" --name assignment4serve-container -p 8080:8080 assignment4serve:onnx
+docker build . -f .\docker\Dockerfile.serve -t mlops-serve:onnx
+docker run --rm --gpus all -v "$(pwd)/checkpoints:/app/checkpoints" --name mlops-serve-container -p 8080:8080 mlops-serve:onnx
 ```
+
+Kubernetes on Docker Desktop
+----------------------------
+
+The Kubernetes training Job uses host-backed volumes so the existing repository directories are mounted in the same way as the Docker commands above. Apply the storage resources before starting the Job:
+
+```powershell
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/storage.yaml
+kubectl apply -f k8s/training-job.yaml
+```
+
+The host paths in `k8s/storage.yaml` target this repository at `D:\Projects\mlops-pytorch-pipeline`. Update those paths if the repository is located elsewhere. This local configuration runs the training Job on CPU.
